@@ -1,0 +1,22 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #f0f0f0; /* fallback */
+  /* or simply avoid using oklch if not necessary */
+}
+
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .floating {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  

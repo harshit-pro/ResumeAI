@@ -1,0 +1,6 @@
+img {
+    display: block; /* Ensure it is visible */
+    max-width: 100%;
+    height: auto;
+  }
+  
