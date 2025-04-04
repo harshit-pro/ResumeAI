@@ -1,10 +1,15 @@
 package com.htech.resumemaker.services;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -16,6 +21,9 @@ public class ResumeServiceImpl implements ResumeServices {
 
     private final WebClient webClient;
 
+    @Value("${gemini.api.key}")  // Fetch API Key from application.properties
+    private String apiKey;
+
     public ResumeServiceImpl(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.baseUrl("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent").build();
     }
@@ -25,7 +33,7 @@ public class ResumeServiceImpl implements ResumeServices {
         // Check for null userResumeDescription
         Objects.requireNonNull(userResumeDescription, "User description cannot be null.");
 
-        String promptString = this.loadPromptFromFile("resume_prompt.txt");
+        String promptString = this.loadPromptFromFile();
         // Check for null promptString
         Objects.requireNonNull(promptString, "Prompt string cannot be null.");
 
@@ -53,8 +61,9 @@ public class ResumeServiceImpl implements ResumeServices {
         requestBody.put("generationConfig", generationConfig);
 
         try {
-            // Call Gemini API using WebClient
+            // Call Gemini API using WebClient with API key in headers
             String response = webClient.post()
+                    .uri(uriBuilder -> uriBuilder.queryParam("key", apiKey).build())
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -68,9 +77,11 @@ public class ResumeServiceImpl implements ResumeServices {
         }
     }
 
-    private String loadPromptFromFile(String filename) throws IOException {
-        Path path = Path.of("src/main/resources", filename);
-        return Files.readString(path);
+    public String loadPromptFromFile() throws IOException {
+        ClassPathResource resource = new ClassPathResource("resume_prompt.txt");
+        try (InputStream inputStream = resource.getInputStream()) {
+            return StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+        }
     }
 
     private String putValuesToTemplate(String template, Map<String, String> values) {
