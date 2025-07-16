@@ -21,42 +21,29 @@
     <properties>
         <java.version>21</java.version>
         <spring-ai.version>1.0.0-M5</spring-ai.version>
+        <lombok.version>1.18.32</lombok.version>
+        <pdfbox.version>2.0.29</pdfbox.version>
+        <jackson.version>2.15.2</jackson.version>
     </properties>
 
+
     <dependencies>
-        <!-- Spring Boot Web for REST API -->
+        <!-- https://mvnrepository.com/artifact/com.okta.spring/okta-spring-boot-starter -->
+
+        <!-- Spring Boot Starters -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- JSON Processing -->
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20250107</version>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-60</artifactId> <!-- Or match your Hibernate version -->
+            <version>2.21.1</version>
         </dependency>
-
-        <!-- Spring Boot Logging -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-logging</artifactId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-
-        <!-- Lombok (for reducing boilerplate code) -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- Google Gemini API (Correct Dependency) -->
-<!--        <dependency>-->
-<!--            <groupId>com.google.cloud</groupId>-->
-<!--            <artifactId>google-cloud-ai-generativelanguage</artifactId>-->
-<!--            <version>0.6.0</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
@@ -65,47 +52,99 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        <!-- Spring Boot Testing -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.projectreactor</groupId>
-            <artifactId>reactor-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
         </dependency>
 
-        <!-- PDF handling -->
+        <!-- Database -->
         <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>2.0.29</version>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Utilities -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- JSON Processing -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20250107</version>
+        </dependency>
+        <!-- For Maven -->
+        <dependency>
+            <groupId>com.vladmihalcea</groupId>
+            <artifactId>hibernate-types-52</artifactId>
+            <version>2.21.1</version> <!-- Use latest -->
         </dependency>
 
-        <!-- Spring Boot DevTools for hot reloading -->
+        <!-- PDF handling -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!-- Development -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.github.ulisesbocchio</groupId>-->
-<!--            <artifactId>jasypt-spring-boot-starter</artifactId>-->
-<!--            <version>3.0.5</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -121,6 +160,15 @@
     </dependencyManagement>
 
     <repositories>
+        <!-- Spring AI Milestone Repository -->
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <!-- Google Maven Repository (Needed for Gemini API) -->
         <repository>
             <id>google-maven</id>
@@ -130,7 +178,6 @@
 
     <build>
         <plugins>
-            <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -142,12 +189,12 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
-            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -165,3 +212,176 @@
     </build>
 
 </project>
+
+
+        <!--<?xml version="1.0" encoding="UTF-8"?>-->
+        <!--<project xmlns="http://maven.apache.org/POM/4.0.0"-->
+        <!--         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+        <!--         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">-->
+
+        <!--    <modelVersion>4.0.0</modelVersion>-->
+
+        <!--    <parent>-->
+        <!--        <groupId>org.springframework.boot</groupId>-->
+        <!--        <artifactId>spring-boot-starter-parent</artifactId>-->
+        <!--        <version>3.4.2</version>-->
+        <!--        <relativePath/>-->
+        <!--    </parent>-->
+
+        <!--    <groupId>com.hTech</groupId>-->
+        <!--    <artifactId>ResumeBuilder</artifactId>-->
+        <!--    <version>0.0.1-SNAPSHOT</version>-->
+        <!--    <name>ResumeBuilder</name>-->
+        <!--    <description>This is a backend of resume maker</description>-->
+
+        <!--    <properties>-->
+        <!--        <java.version>21</java.version>-->
+        <!--        <spring-ai.version>1.0.0-M5</spring-ai.version>-->
+        <!--    </properties>-->
+
+        <!--    <dependencies>-->
+        <!--        &lt;!&ndash; Spring Boot Web for REST API &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-web</artifactId>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; JSON Processing &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.json</groupId>-->
+        <!--            <artifactId>json</artifactId>-->
+        <!--            <version>20250107</version>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; Spring Boot Logging &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-logging</artifactId>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; Lombok (for reducing boilerplate code) &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.projectlombok</groupId>-->
+        <!--            <artifactId>lombok</artifactId>-->
+        <!--            <scope>provided</scope>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; Google Gemini API (Correct Dependency) &ndash;&gt;-->
+        <!--&lt;!&ndash;        <dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <groupId>com.google.cloud</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <artifactId>google-cloud-ai-generativelanguage</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <version>0.6.0</version>&ndash;&gt;-->
+        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-mail</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-actuator</artifactId>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash; Spring Boot Testing &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-test</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-webflux</artifactId>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>io.projectreactor</groupId>-->
+        <!--            <artifactId>reactor-test</artifactId>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; PDF handling &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.pdfbox</groupId>-->
+        <!--            <artifactId>pdfbox</artifactId>-->
+        <!--            <version>2.0.29</version>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; JSON Processing &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.fasterxml.jackson.core</groupId>-->
+        <!--            <artifactId>jackson-databind</artifactId>-->
+        <!--            <version>2.15.2</version>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; Spring Boot DevTools for hot reloading &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-devtools</artifactId>-->
+        <!--            <optional>true</optional>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-data-jpa</artifactId>-->
+        <!--        </dependency>-->
+        <!--        &lt;!&ndash;        <dependency>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <groupId>com.github.ulisesbocchio</groupId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <artifactId>jasypt-spring-boot-starter</artifactId>&ndash;&gt;-->
+        <!--&lt;!&ndash;            <version>3.0.5</version>&ndash;&gt;-->
+        <!--&lt;!&ndash;        </dependency>&ndash;&gt;-->
+        <!--    </dependencies>-->
+
+        <!--    <dependencyManagement>-->
+        <!--        <dependencies>-->
+        <!--            <dependency>-->
+        <!--                <groupId>org.springframework.ai</groupId>-->
+        <!--                <artifactId>spring-ai-bom</artifactId>-->
+        <!--                <version>${spring-ai.version}</version>-->
+        <!--                <type>pom</type>-->
+        <!--                <scope>import</scope>-->
+        <!--            </dependency>-->
+        <!--        </dependencies>-->
+        <!--    </dependencyManagement>-->
+
+        <!--    <repositories>-->
+        <!--        &lt;!&ndash; Google Maven Repository (Needed for Gemini API) &ndash;&gt;-->
+        <!--        <repository>-->
+        <!--            <id>google-maven</id>-->
+        <!--            <url>https://maven-central.storage.googleapis.com</url>-->
+        <!--        </repository>-->
+        <!--    </repositories>-->
+
+        <!--    <build>-->
+        <!--        <plugins>-->
+        <!--            &lt;!&ndash; Compiler Plugin &ndash;&gt;-->
+        <!--            <plugin>-->
+        <!--                <groupId>org.apache.maven.plugins</groupId>-->
+        <!--                <artifactId>maven-compiler-plugin</artifactId>-->
+        <!--                <version>3.13.0</version>-->
+        <!--                <configuration>-->
+        <!--                    <source>${java.version}</source>-->
+        <!--                    <target>${java.version}</target>-->
+        <!--                    <annotationProcessorPaths>-->
+        <!--                        <path>-->
+        <!--                            <groupId>org.projectlombok</groupId>-->
+        <!--                            <artifactId>lombok</artifactId>-->
+        <!--                        </path>-->
+        <!--                    </annotationProcessorPaths>-->
+        <!--                </configuration>-->
+        <!--            </plugin>-->
+
+        <!--            &lt;!&ndash; Spring Boot Plugin &ndash;&gt;-->
+        <!--            <plugin>-->
+        <!--                <groupId>org.springframework.boot</groupId>-->
+        <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+        <!--                <configuration>-->
+        <!--                    <excludes>-->
+        <!--                        <exclude>-->
+        <!--                            <groupId>org.projectlombok</groupId>-->
+        <!--                            <artifactId>lombok</artifactId>-->
+        <!--                        </exclude>-->
+        <!--                    </excludes>-->
+        <!--                </configuration>-->
+        <!--            </plugin>-->
+        <!--        </plugins>-->
+        <!--        <finalName>ResumeBuilder</finalName>-->
+        <!--    </build>-->
+
+        <!--</project>-->

@@ -1,15 +1,22 @@
-//package services;
 package com.htech.resumemaker.services;
 
-import org.springframework.stereotype.Service;
+import com.htech.resumemaker.dto.ResumeRequest;
+import com.htech.resumemaker.dto.ResumeResponse;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-@Service
 public interface ResumeServices {
-    // interface isliye agar future me implementation badalna chao to badal
-//    sakte ho
-    Map<String, Object> generateResumeResponse(String userResumeDescription) throws IOException;
+    Map<String, Object> generateResumeResponse(String userResumeDescription);
 
+    ResumeResponse generateAndSaveResume(ResumeRequest request, String username);
+
+    List<ResumeResponse> getUserResumes(String username);
+
+    ResumeResponse getResumeById(Long id, String username);
+
+    ResumeResponse updateResume(Long id, ResumeRequest request, String username);
+
+    void deleteResume(Long id, String username);
 }

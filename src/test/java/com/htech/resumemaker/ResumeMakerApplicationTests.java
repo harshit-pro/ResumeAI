@@ -1,5 +1,6 @@
 package com.htech.resumemaker;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,9 +9,10 @@ import com.htech.resumemaker.services.ResumeServices;
 import java.io.IOException;
 
 @SpringBootTest(classes = ResumeMakerApplication.class)
+@RequiredArgsConstructor
 class ResumeMakerApplicationTests {
-    @Autowired
-    private ResumeServices resumeServices;
+
+    private final ResumeServices resumeServices;
 
     @Test
     void contextLoads() throws IOException {

@@ -127,7 +127,7 @@ const GenerateResume = () => {
       let parsedResponse = responseData;
       if (typeof responseData === "string") {
         try {
-          parsedResponse = JSON.parse(responseData);
+          parsedResponse = JSON.parse(responseData);     // text: '{"name":"John","age":30}' JSON string inside object
         } catch (parseError) {
           console.error("Error parsing API response string:", parseError);
           throw new Error("API returned invalid JSON.");
@@ -139,7 +139,7 @@ const GenerateResume = () => {
         throw new Error("Candidate content parts are missing.");
       }
   
-      const candidateText = candidate.content.parts[0].text;
+      const candidateText = candidate.content.parts[0].text;  // canditateText= '{"name":"John","age":30}'(String)
   
       if (!candidateText) {
         throw new Error("Extracted text response is empty.");
@@ -241,6 +241,7 @@ const GenerateResume = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
+      
       <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <RiFilePaper2Line className="text-accent" /> {label}
       </h3>

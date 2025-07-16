@@ -1,129 +1,135 @@
-package com.htech.resumemaker.controller;
-
-
-import com.htech.resumemaker.dto.ResumeRequest;
-import com.htech.resumemaker.services.ResumeServices;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.Map;
-
-@RestController
-@CrossOrigin(origins = "*")
-@RequestMapping("/api/v1/resume")
-public class ResumeController {
-    @Autowired
-    private ResumeServices resumeServices;
-
-    public ResumeController(ResumeServices resumeServices) {
-        this.resumeServices = resumeServices;
-    }
-
-    @PostMapping("/generate")
-    public ResponseEntity<Map<String, Object>> getResumeData(
-            @RequestBody ResumeRequest resumeRequest
-    ) throws IOException {
-        Map<String, Object> stringObjectMap = resumeServices.generateResumeResponse(resumeRequest.userDescription());
-        return new ResponseEntity<>(stringObjectMap, HttpStatus.OK);
-
-    }
-
-
-}
-
-
-
-
-
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.stereotype.Service;
-//import org.springframework.web.reactive.function.client.WebClient;
-//import org.springframework.http.HttpHeaders;
-//import org.springframework.http.MediaType;
+//package com.htech.resumemaker.controller;
+//
+//
+//
+//import com.htech.resumemaker.dto.ResumeRequest;
+//import com.htech.resumemaker.model.Resume;
+////import com.htech.resumemaker.services.ResumeDatabaseService;
+//import com.htech.resumemaker.services.ResumeServices;
+//import lombok.RequiredArgsConstructor;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.http.HttpStatus;
+//import org.springframework.http.ResponseEntity;
+//import org.springframework.security.core.Authentication;
+//import org.springframework.web.bind.annotation.*;
 //
 //import java.io.IOException;
+//import java.util.HashMap;
+//import java.util.List;
 //import java.util.Map;
+//import java.util.UUID;
 //
-//@Service
-//class ResumeServices {
+//@RestController
+//@RequestMapping("/api/v1/resume")
+//@RequiredArgsConstructor
+//public class ResumeController {
 //
+//    private final ResumeServices resumeServices;
 //
-//    private final WebClient webClient;
+//    @PostMapping("/generate")
+//    public ResponseEntity<?> getResumeData(@RequestBody ResumeRequest request, Authentication authentication) {
+//        try {
+//            if (request == null || request.userDescription() == null || request.userDescription().trim().isEmpty()) {
+//                return ResponseEntity.badRequest().body(Map.of(
+//                        "error", "Description cannot be null or empty"
+//                ));
+//            }
 //
-//    // Your Gemini API Key
-//    @Value("${gemini.api.key}")  // Fetch API Key from application.properties
-//    private static String apiKey;
-//    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+//            // Call service method and get the Map response
+//            Map<String, Object> generatedContent = resumeServices.generateResumeResponse(request.userDescription());
 //
-//    public ResumeServices(WebClient.Builder webClientBuilder) {
-//        this.webClient = webClientBuilder.baseUrl(GEMINI_URL).build();
-//    }
+//            // Create a response
+//            Map<String, Object> response = new HashMap<>();
+//            response.put("status", "success");
+//            response.put("data", generatedContent);
 //
-//    /**
-//     * Generates resume analysis using Gemini API.
-//     * @param userDescription - Resume text combined with JD.
-//     * @return JSON response with JD match, missing keywords, and profile summary.
-//     * @throws IOException
-//     */
-//    public Map<String, Object> generateResumeResponse(String userDescription) throws IOException {
-//
-//        // Prepare the prompt for Gemini
-//        String prompt = preparePrompt(userDescription);
-//
-//        // Make the Gemini API request
-//        String response = webClient.post()
-//                .uri(GEMINI_URL)
-//                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-//                .bodyValue(Map.of("contents", Map.of("parts", Map.of("text", prompt))))
-//                .retrieve()
-//                .bodyToMono(String.class)
-//                .block();
-//
-//        // Parse the JSON response
-//        ObjectMapper mapper = new ObjectMapper();
-//        Map<String, Object> responseMap = mapper.readValue(response, Map.class);
-//
-//        // Return the formatted JSON response
-//        return responseMap;
-//    }
-//
-//    /**
-//     * Prepares the Gemini prompt for resume analysis.
-//     * @param resumeText - User resume content.
-//     * @return Formatted prompt.
-//     */
-//    private String preparePrompt(String resumeText) {
-//        return """
-//        Act as an expert ATS (Applicant Tracking System) specialist with expertise in:
-//        - Technical fields (Software Engineering, Data Science, Big Data Engineering)
-//        - Resume optimization
-//        - Job description matching
-//
-//        Evaluate the following resume against the job description. Provide detailed feedback,
-//        considering that the job market is highly competitive.
-//        Mention all missing keywords
-//        Give Profile summary content with proper formated manner... with in depth changes recommendation
-//        with proper headings from new Line .
-//        and suggestions To improve the resume optimization
-//
-//        Analyze this resume against the job description. Format response with:
-//        - **Bold headings** for sections
-//        - Bullet points for lists
-//        - Clear structure
-//
-//        Resume:
-//        %s
-//
-//        Provide the response in the following JSON format ONLY:
-//        {
-//            "JD Match": "percentage between 0-100",
-//            "MissingKeywords": ["keyword1", "keyword2", ...],
-//            "Profile Summary": "detailed analysis of the match and specific improvement suggestions"
+//            return ResponseEntity.ok(response);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(Map.of(
+//                            "status", "error",
+//                            "message", "Failed to generate resume: " + e.getMessage()
+//                    ));
 //        }
-//        """.formatted(resumeText);
 //    }
 //}
+
+
+package com.htech.resumemaker.controller;
+
+import com.htech.resumemaker.dto.ResumeRequest;
+import com.htech.resumemaker.dto.ResumeResponse;
+import com.htech.resumemaker.model.Resume;
+import com.htech.resumemaker.services.ResumeServices;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/resume")
+@RequiredArgsConstructor
+public class ResumeController {
+
+    private final ResumeServices resumeServices;
+
+    @PostMapping("/generate")
+    public ResponseEntity<?> generateResume(@RequestBody ResumeRequest request, Authentication authentication) {
+        try {
+            if (request == null || request.userDescription() == null || request.userDescription().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Description cannot be null or empty"
+                ));
+            }
+
+            String username = authentication.getName();
+            ResumeResponse response = resumeServices.generateAndSaveResume(request, username);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "status", "error",
+                            "message", "Failed to generate resume: " + e.getMessage()
+                    ));
+        }
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<List<ResumeResponse>> getUserResumes(Authentication authentication) {
+        String username = authentication.getName();
+        List<ResumeResponse> resumes = resumeServices.getUserResumes(username);
+        return ResponseEntity.ok(resumes);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResumeResponse> getResumeById(@PathVariable Long id, Authentication authentication) {
+        String username = authentication.getName();
+        ResumeResponse resume = resumeServices.getResumeById(id, username);
+        return ResponseEntity.ok(resume);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ResumeResponse> updateResume(
+            @PathVariable Long id,
+            @RequestBody ResumeRequest request,
+            Authentication authentication) {
+        String username = authentication.getName();
+        ResumeResponse updatedResume = resumeServices.updateResume(id, request, username);
+        return ResponseEntity.ok(updatedResume);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteResume(@PathVariable Long id, Authentication authentication) {
+        String username = authentication.getName();
+        resumeServices.deleteResume(id, username);
+        return ResponseEntity.ok().build();
+    }
+}
+

@@ -6,7 +6,9 @@ Input Description:
 "{{userDescription}}"
 
 JSON Structure Requirements:
+
 personalInformation: Include the following keys:
+title (string, e.g., "Software Engineer", "Data Scientist")
 fullName (string)
 email (string)
 phoneNumber (string)
@@ -55,7 +57,13 @@ Interests: A list of additional interests or hobbies related to technology or pr
 id(number)
 name(string)
 
+Extract all relevant information from the user's description below and fill in the JSON structure.
+Include all sections in your response, even if some are empty arrays.
+Make sure the JSON is valid with proper quotes around keys and string values.
 
-Return only valid pure JSON without extra text.
+User Description:
+{{userDescription}}
+
+Return ONLY the JSON object with no additional text.
 
 
