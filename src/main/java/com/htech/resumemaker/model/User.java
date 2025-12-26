@@ -23,21 +23,16 @@ public class User {
     @Column(unique = true, nullable = false)
     private String clerkId;
     @Column(unique = true, nullable = false)
-private String username;
+    private String username;
     private String firstName;
     private String lastName;
 
     @Column(unique = true,nullable = false)
     private String email;
     private String password;
-    private String profession;
-    private String experienceLevel;
  // Assuming skills is a list of strings or a custom type, adjust as necessar
     // skills can be a list of strings or a single string with comma-separated values
-    @Column(name = "skills", columnDefinition = "text")
-    private String skills;
 
-    private String profilePicture;
     private  Integer credits;
 
     private LocalDateTime createdAt = LocalDateTime.now();

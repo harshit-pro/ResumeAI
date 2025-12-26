@@ -1,14 +1,13 @@
 package com.htech.resumemaker.model;
 
-import com.htech.resumemaker.dto.JsonConverter;
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-
 
 @Entity
 @Table(name = "resumes")
@@ -17,22 +16,22 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class Resume {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+@Column(nullable = false)
+private String title;
 
-    private String title;
 
-    @Convert(converter = JsonConverter.class)
-    @Column(columnDefinition = "jsonb")
-    // because JPA does not support mapping a Map<String, Object> as a basic attribute.
-    // To store a map as a JSON column, you need to use a converter or a supported type
-    // 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "jsonb")
     private Map<String, Object> content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id") // this foreign key column  it followed on delete cascade or not-:
+     // this will delete all resumes if user is deleted
     private User user;
 
     @CreationTimestamp
@@ -40,4 +39,15 @@ public class Resume {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

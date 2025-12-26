@@ -49,9 +49,6 @@ public class ClerkWebhookController {
             @RequestHeader("svix-timestamp") String svixTimestamp,
             @RequestHeader("svix-signature") String svixSignature,
             @RequestBody String payload) {
-
-
-        log.info("Received Clerk webhook with svix-id: {}", svixId);
         try {
             if (!verifyWebhookSignature(svixId, svixTimestamp, svixSignature, payload)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
@@ -65,7 +62,6 @@ public class ClerkWebhookController {
             JsonNode rootNode = new ObjectMapper().readTree(payload);
             String eventType = rootNode.path("type").asText();
             JsonNode dataNode = rootNode.path("data");
-
             switch (eventType) {
                 case "user.created":
                     handleUserCreated(dataNode);
@@ -79,10 +75,9 @@ public class ClerkWebhookController {
                 default:
                     log.warn("Unhandled Clerk event type: {}", eventType);
             }
-
             return ResponseEntity.ok().build();
-
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Error processing Clerk webhook", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                     UserResponse.builder()
@@ -93,14 +88,12 @@ public class ClerkWebhookController {
             );
         }
     }
-
     private boolean verifyWebhookSignature(String svixId, String svixTimestamp, String svixSignature, String payload) {
         try {
             long now = Instant.now().getEpochSecond();
             long timestamp = Long.parseLong(svixTimestamp);
 
             if (Math.abs(now - timestamp) > TOLERANCE_IN_SECONDS) {
-                log.warn("Webhook timestamp outside tolerance");
                 return false;
             }
 
@@ -114,8 +107,6 @@ public class ClerkWebhookController {
                     return true;
                 }
             }
-
-            log.warn("No matching signature found in webhook header");
             return false;
 
         } catch (Exception e) {
@@ -123,7 +114,6 @@ public class ClerkWebhookController {
             return false;
         }
     }
-
     private String computeHMAC(String data) throws Exception {
         Mac hmac = Mac.getInstance("HmacSHA256");
         SecretKeySpec keySpec = new SecretKeySpec(decodedSecret, "HmacSHA256");
@@ -131,7 +121,6 @@ public class ClerkWebhookController {
         byte[] hash = hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hash);
     }
-
     private boolean constantTimeEquals(String a, String b) {
         if (a.length() != b.length()) return false;
         int result = 0;
@@ -140,7 +129,6 @@ public class ClerkWebhookController {
         }
         return result == 0;
     }
-
     private void handleUserCreated(JsonNode data) {
         UserDTO newUser = UserDTO.builder()
                 .clerkId(data.path("id").asText())
@@ -171,8 +159,7 @@ public class ClerkWebhookController {
             log.warn("User not found to update: {}", clerkId);
         }
     }
-
-    @Transactional
+    @Transactional // it is used
     protected void handleUserDeleted(JsonNode data) {
         String clerkId = data.path("id").asText();
         try {

@@ -1,0 +1,18 @@
+# Ignore local build outputs and VCS metadata
+target/
+node_modules
+.git
+.gitignore
+**/.DS_Store
+
+# IDE
+.idea
+.vscode
+
+# Logs
+*.log
+logs/
+
+# Frontend build cache if present
+resume_frontend/node_modules
+resume_frontend/dist

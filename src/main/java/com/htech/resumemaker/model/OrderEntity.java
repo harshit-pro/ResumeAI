@@ -33,12 +33,9 @@ public class OrderEntity {
     private Timestamp created_at;
     @PrePersist
     public void prePersist() {
-
         if (payment == null) {
             payment = false; // Default value for payment status
         }
     }
-
-
 }
 

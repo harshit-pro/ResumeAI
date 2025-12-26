@@ -27,12 +27,10 @@ public class OrderController {
 //    private final ResumeOrderResponse resumeOrderResponse;
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestParam String planId, Authentication auth) throws RazorpayException {
-        System.out.println("Creating order with planId: " + planId + " for user: " + auth.getName());
         Map<String, Object> responseMap = new HashMap<>();
         ResumeOrderResponse response = null;
 
         if (auth.getName().isEmpty() || auth.getName() == null) {
-            System.out.println("Unauthorized access: User not authenticated.");
             response = ResumeOrderResponse.builder()
                     .statusCode(HttpStatus.FORBIDDEN)
                     .success(false)
@@ -43,32 +41,24 @@ public class OrderController {
         }
         try {
             Order order = orderService.createOrder(planId, auth.getName());
-//                System.out.println("Order created successfully: " + order);
-            log.info("Order created successfully: " + order);
+
             RazorPayOrderDto responseDTO = convertToDTO(order);
-            System.out.println("Converted order to DTO: " + responseDTO.getAmount());
-            log.info("Converted order to DTO: " + responseDTO.getAmount());
+
             response = ResumeOrderResponse.builder()
                     .statusCode(HttpStatus.CREATED)
                     .data(responseDTO)
                     .success(true)
                     .build();
-            System.out.println("Order response: " + response);
             return ResponseEntity.ok(response);
         } catch (RazorpayException e) {
-            System.out.println("Error creating order: " + e.getMessage());
             response = ResumeOrderResponse.builder()
                     .statusCode(HttpStatus.INTERNAL_SERVER_ERROR)
                     .data("Error creating order: " + e.getMessage())
                     .success(false)
-
-
                     .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
     }
-
     private RazorPayOrderDto convertToDTO(Order order) {
 
         RazorPayOrderDto dto=   RazorPayOrderDto.builder()
@@ -79,15 +69,15 @@ public class OrderController {
                 .receipt(order.get("receipt"))
                 .status(order.get("status"))
                 .created_at(order.get("created_at"))
-
                 .build();
-        System.out.println("DTO created: " + dto);
         return dto;
-
     }
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifyOrder(@RequestBody Map<String, Object> request) throws RazorpayException {
+    @PostMapping("/verify")// why  you need to verify order
+    // because razorpay order is created on client side, and you need to verify it on server side
+    // to make sure that the order is created by your server and not by someone else
+    // and also to make sure that the payment is successful
 
+    public ResponseEntity<?> verifyOrder(@RequestBody Map<String, Object> request) throws RazorpayException {
         try {
             String razorpayOrderId=request.get("razorpay_order_id").toString();
             Map<String,Object> returnValue =razorPayService.verifyPayment(razorpayOrderId);

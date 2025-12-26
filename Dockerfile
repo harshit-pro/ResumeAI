@@ -17,10 +17,10 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # Ensure the JAR file exists before copying
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/ResumeBuilder.jar ./app.jar
+# Expose the application port (overridden by SERVER_PORT env if provided)
+EXPOSE 8090
 
-# Expose the application port
-EXPOSE 8081
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

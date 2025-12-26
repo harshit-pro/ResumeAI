@@ -3,6 +3,7 @@ Generate a professional IT job resume in JSON format based on the following desc
 ensure the output contains only the JSON data and no extra text (like Markdown code blocks, comments, or explanations)..
 
 Input Description:
+{"title": "{{userTitle}}",
 "{{userDescription}}"
 
 JSON Structure Requirements:

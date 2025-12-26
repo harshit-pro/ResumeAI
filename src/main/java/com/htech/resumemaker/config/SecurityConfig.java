@@ -26,7 +26,7 @@ import java.util.List;
 @EnableWebSecurity
 //@EnableMethodSecurity
 @RequiredArgsConstructor
-public class SecurityConfig {
+public class    SecurityConfig {
 
     @Value("${frontend.url}")
     private String frontendUrl;
@@ -38,16 +38,24 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
+                // Disable CSRF for stateless APIs
+                // means we are not using sessions to store user state
+                // “CSRF protection cookies-based apps ke liye hota hai,
+                // JWT-based stateless REST APIs me ise disable kar dete hain.
+
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/webhooks/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
                         // Set this to authenticated instead of permitAll
                         .requestMatchers("/api/v1/resume/users/deduct-credit").authenticated()
                         .requestMatchers("/api/v1/resume/generate").authenticated()
+                        .requestMatchers("/api/v1/resume/orders").authenticated()
+                        .requestMatchers("/api/v1/resume/plans").authenticated()
                         .requestMatchers("/api/v1/resume/credits").authenticated()
 
                         // All other API requests

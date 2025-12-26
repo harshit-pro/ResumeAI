@@ -6,15 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.bind.annotation.*;
-
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class EmailController {
-
     @Autowired
     private JavaMailSender mailSender;
-
     @PostMapping("/send-email")
     public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
         try {
@@ -27,7 +24,6 @@ public class EmailController {
                             "Email: " + request.getEmail() + "\n\n" +
                             "Message: " + request.getMessage()
             );
-
             mailSender.send(message);
             return ResponseEntity.ok("Email sent successfully");
         } catch (Exception e) {

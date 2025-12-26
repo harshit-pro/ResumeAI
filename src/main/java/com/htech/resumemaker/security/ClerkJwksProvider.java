@@ -27,7 +27,6 @@ public class ClerkJwksProvider {
     // in simple words is class ka kaam hai Clerk se JSON Web Key Set (JWKS) fetch karna
     // aur cache karna, taaki JWT tokens ko validate kar sakein.
 
-
     /**
      * The URL to fetch the JSON Web Key Set (JWKS) for Clerk authentication.
      * This URL is used to validate JWT tokens issued by Clerk.
@@ -38,7 +37,8 @@ public class ClerkJwksProvider {
 
     }
 
-    private Map<String, PublicKey> keyCache = new HashMap<>();
+    private Map<String, PublicKey> keyCache = new HashMap<>(); // Cache to store fetched keys->
+    // keys means kid and PublicKey that contains the actual public key which is used to verify the JWT signature
     private long lastFetchTime=0;
     private static final long CACHE_EXPIRY_TIME = 3600000; // 1 hour in milliseconds Time to live
 

@@ -1,19 +1,20 @@
 package com.htech.resumemaker.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.UUID;
-
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 @Builder
-public record ResumeResponse(
-        Long id,
-        String title,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime createdAt,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime updatedAt,
-        Map<String, Object> content
-) {}
+public class ResumeResponse
+         {
+             Long id;
+             String title;
+             Map<String, Object> content;
+             LocalDateTime createdAt;
+             LocalDateTime updatedAt;
+
+}

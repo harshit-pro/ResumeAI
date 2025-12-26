@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 @Service
 @RequiredArgsConstructor
@@ -17,37 +18,21 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-
-//    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-//
-//        return org.springframework.security.core.userdetails.User
-//                .withUsername(user.getEmail())
-//                .password(user.getPassword())
-//                .build();
-//    }
-
     public UserDTO saveUser(UserDTO userDto) {
-        System.out.println("Saving user with data: " + userDto); // Debugging line
         User userToSave;
         Optional<User> optionalUser = userRepository.findByClerkId(userDto.getClerkId());
 
         if (optionalUser.isPresent()) {
             // Update existing user
             userToSave = optionalUser.get();
-            userToSave.setEmail(userDto.getEmail());
+
             userToSave.setFirstName(userDto.getFirstName());
             userToSave.setLastName(userDto.getLastName());
-
-            userToSave.setProfilePicture(userDto.getPhotoUrl());
-            System.out.println("Updating user with data: " + userToSave); // Debugging line
-
+            userToSave.setCredits(userDto.getCredits());
             // Only update password if it's provided
             if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
                 userToSave.setPassword(passwordEncoder.encode(userDto.getPassword()));
             }
-
             // Only update credits if they're provided
             if (userDto.getCredits() != null) {
                 userToSave.setCredits(userDto.getCredits());
@@ -56,11 +41,10 @@ public class UserServiceImpl implements UserService {
             // Create new user
             userToSave = new User();
             userToSave.setClerkId(userDto.getClerkId());
+            userToSave.setUsername(userDto.getUsername() != null ? userDto.getUsername() : userDto.getEmail());
             userToSave.setEmail(userDto.getEmail());
             userToSave.setFirstName(userDto.getFirstName());
             userToSave.setLastName(userDto.getLastName());
-            userToSave.setProfilePicture(userDto.getPhotoUrl() != null ? userDto.getPhotoUrl() : "");
-            System.out.println("Creating new user with data: " + userToSave); // Debugging line
 
             // Set default credits for new users
             userToSave.setCredits(userDto.getCredits() != null ? userDto.getCredits() : 5);
@@ -72,10 +56,14 @@ public class UserServiceImpl implements UserService {
                 userToSave.setPassword(passwordEncoder.encode("clerktest"));
             }
         }
-        User newUser= mapToEntity(userDto);
-        User savedUser = userRepository.save(newUser);
-        System.out.println("User saved with data: " + savedUser); // Debugging line
-        return mapToDto(savedUser);
+        try {
+            User savedUser = userRepository.save(userToSave);
+            return mapToDto(savedUser);
+        }catch (Exception e) {
+            throw new RuntimeException("Failed to save user: " + e.getMessage());
+        }
+         // Debugging line
+
     }
 
 //    @Override
@@ -105,7 +93,6 @@ public class UserServiceImpl implements UserService {
 //        User savedNewUser = userRepository.save(newUser);
 //        return mapToDto(savedNewUser);
 //    }
-
         private UserDTO mapToDto (User savedUser){
             return UserDTO.builder()
                     .email(savedUser.getEmail())
@@ -116,28 +103,21 @@ public class UserServiceImpl implements UserService {
                     .build();
         }
     private User mapToEntity(UserDTO userDto) {
-        User.UserBuilder builder = User.builder()
+        System.out.println("Mapping UserDTO to User entity: " + userDto);
+        return  User.builder()
                 .clerkId(userDto.getClerkId())
                 .username(userDto.getUsername())
-                .email(userDto.getEmail())
                 .firstName(userDto.getFirstName())
                 .lastName(userDto.getLastName())
-                .credits(userDto.getCredits())
-                .profilePicture(userDto.getPhotoUrl());
+                .email(userDto.getEmail())
+                .credits(userDto.getCredits() != null ? userDto.getCredits() : 5)
+                .build();
 
         // Only encode password if present, else use a default or null (as per your security model)
-        if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
-            builder.password(passwordEncoder.encode(userDto.getPassword()));
-        } else {
-            // You may want to set a default value or just null
-            builder.password(passwordEncoder.encode("clerktest")); // or just don't set password
-        }
-        return builder.build();
     }
         public UserDTO getUserByClerkId (String clerkId){
             User userEntity = userRepository.findByClerkId(clerkId).orElseThrow(() ->
-
-                    new UsernameNotFoundException("User not found with clerkId: " + clerkId));
+                    new UsernameNotFoundException("1.User not found with clerkId: " + clerkId));
             return mapToDto(userEntity);
 
         }

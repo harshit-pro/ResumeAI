@@ -5,8 +5,10 @@ import lombok.Setter;
 
 
 public record ResumeRequest(
-
         String userDescription,
+
         String title
-) {
+)
+{
+
 }

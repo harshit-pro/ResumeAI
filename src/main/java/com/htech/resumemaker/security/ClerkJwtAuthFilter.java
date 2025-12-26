@@ -88,7 +88,6 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
                 .parseClaimsJws(token)
                 .getBody();
     }
-
     private void setAuthentication(String userId) {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
@@ -98,7 +97,6 @@ public class ClerkJwtAuthFilter extends OncePerRequestFilter {
                 )
         );
     }
-
     private void sendError(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.getWriter().write(message);

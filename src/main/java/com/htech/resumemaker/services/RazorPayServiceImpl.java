@@ -32,7 +32,7 @@ public class RazorPayServiceImpl implements RazorPayService {
     public Order createOrder(Double amount, String currency) throws RazorpayException {
         ///  ism humne RazorpayClient ka object banaya hai
         /// aur usme humne key id aur secret pass kiya hai
-        /// aur uske baad humne order create kiya hai
+        /// aur uske baad json ka  order object create kiya hai
         /// aur usme humne amount, currency, receipt aur payment_capture pass kiya hai
         /// amount ko 100 se multiply kiya hai kyuki razorpay me amount paise me hota hai
         /// aur currency ko INR set kiya hai
@@ -41,14 +41,16 @@ public class RazorPayServiceImpl implements RazorPayService {
         // auto capture payment ka matlab hai ki jab user payment karega to uska payment automatically capture ho jayega
         // then
         try {
-            System.out.println("Creating Razorpay order with keyId: " + razorpayKeyId + " and secret: " + razorpayKeySecret);
             RazorpayClient razorpayClient= new RazorpayClient(razorpayKeyId, razorpayKeySecret);
             JSONObject orderRequest = new JSONObject();
             orderRequest.put("amount",amount * 100);
+            // multiply by 100 to convert to paise
+            // Razorpay works with the smallest currency unit, so for INR, amounts are in paise.
+            // For example, to charge ₹500.00, you need to specify 50000 paise.
+            // This is why we multiply the amount in rupees by 100.
             orderRequest.put("currency", currency);
             orderRequest.put("receipt", "order_rcptid"+ System.currentTimeMillis()); // Unique receipt ID
             orderRequest.put("payment_capture", 1); // Auto capture payment || 0 for manual capture
-            System.out.println("Creating order with amount: " + amount + " and currency: " + currency);
             return razorpayClient.orders.create(orderRequest);
         } catch (RazorpayException e) {
             System.out.println("Error while creating Razorpay order: " + e.getMessage());
@@ -63,24 +65,30 @@ public class RazorPayServiceImpl implements RazorPayService {
         Map<String,Object> returnValue = new HashMap<>();
         try {
             RazorpayClient razorpayClient =new RazorpayClient(razorpayKeyId,razorpayKeySecret);
+            // now razorpay client have all the details to connect to razorpay
             Order order_info= razorpayClient.orders.fetch(razorpayOrderId);
+            // it must show the order details like in this format
+            // {razorpayorderid=order_9A33XWu170gUtm, entity=order, amount=50000, amount_paid=50000, amount_due=0,
+            // currency=INR, receipt=order_rcptid_11, status=paid, attempts=0,
+            // created_at=1396989820}
             if (order_info.get("status").toString().equalsIgnoreCase("paid")) {
                 OrderEntity existingOrder = orderRepository.findByOrderId(razorpayOrderId).orElseThrow(()->
                         new RuntimeException("Order not found"+ razorpayOrderId));
-                if (existingOrder.getPayment()) {
+                if (existingOrder.getPayment()) { // if payment is already done
                     returnValue.put("message", "Payment failed for this order.");
                     returnValue.put("status", false);
                     return returnValue;
                 }
                 UserDTO userDto = userService.getUserByClerkId(existingOrder.getClerkId());
-                userDto.setCredits(userDto.getCredits() + existingOrder.getCredits());
+                userDto.setCredits(userDto.getCredits() + existingOrder.getCredits()); // add credits to user
                 userService.saveUser(userDto);
-                existingOrder.setPayment(false);
+                existingOrder.setPayment(false); // why false?
+                // because payment is done, so we set it to false to indicate that payment is completed
+                // if we set it to true, it will indicate that payment is pending
                 orderRepository.save(existingOrder);
                 returnValue.put("success", true);
                 returnValue.put("message", "Credits added successfully.");
             }
-
         }catch(RazorpayException e) {
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,"Error while verifying payment: " + e.getMessage());

@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: resume_pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: resume_maker
+    ports:
+      # Expose Postgres on host 5434 to avoid conflicts; inside container it stays 5432
+      - "5434:5432"
+    networks:
+      - my-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: resume_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Load all secrets from .env into the container environment
+    env_file:
+      - .env
+    environment:
+      # Non-secret overrides (static values here)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/resume_maker
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 12345
+      SERVER_PORT: 8081
+      CLERK_JWKS_URL: ${CLERK_JWKS_URL}
+    ports:
+      - "8081:8081"
+    networks:
+      - my-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  my-network:
+    driver: bridge
+
