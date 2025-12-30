@@ -39,6 +39,7 @@ public class ResumeController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            System.out.println("Error generating resume: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
                             "status", "error",

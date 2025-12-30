@@ -46,7 +46,7 @@ public class ResumeServiceImpl implements ResumeServices {
                              ResumeRepo resumeRepository,
                              ObjectMapper objectMapper,
                              @Value("${gemini.url}") String geminiUrl) {
-        this.webClient = webClientBuilder.baseUrl(geminiUrl).build();
+        this.webClient = webClientBuilder.baseUrl("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent").build();
         this.userRepository = userRepository;
         this.resumeRepository = resumeRepository;
         this.objectMapper = objectMapper;
@@ -89,8 +89,10 @@ public class ResumeServiceImpl implements ResumeServices {
         Map<String, Object> generationConfig = new HashMap<>();
         generationConfig.put("response_mime_type", "application/json");
         requestBody.put("generationConfig", generationConfig);
+        System.out.println("Prepared request body for Gemini API: " + objectMapper.writeValueAsString(requestBody));
 
         try {
+            System.out.println("Sending request to Gemini API with body: " + objectMapper.writeValueAsString(requestBody));
             String response = webClient.post()
                     .uri(uriBuilder -> uriBuilder.queryParam("key", apiKey).build())
                     .bodyValue(requestBody)
@@ -99,6 +101,7 @@ public class ResumeServiceImpl implements ResumeServices {
                     .retryWhen(Retry.backoff(3, Duration.ofSeconds(2)) // Retry 3 times, wait 2s, 4s, 8s...
                             .filter(throwable -> throwable instanceof WebClientResponseException.TooManyRequests)) // Only retry on 429
                     .block();
+            System.out.println("Received response from Gemini API: " + response);
             JsonNode rootNode = objectMapper.readTree(response);
             JsonNode candidates = rootNode.path("candidates");
             if (candidates.isEmpty() || !candidates.get(0).has("content")) {
@@ -109,17 +112,21 @@ public class ResumeServiceImpl implements ResumeServices {
                 throw new RuntimeException("No content parts in Gemini response");
             }
             String generatedText = content.get(0).path("text").asText();
+            System.out.println("Generated text from Gemini API: " + generatedText);
             try {
                 // Parse the generated text as JSON
                 JsonNode jsonNode = objectMapper.readTree(generatedText);
+                System.out.println("Parsed generated text as JSON: " + jsonNode.toString());
                 return objectMapper.convertValue(jsonNode, Map.class);
             } catch (IOException e) {
+                System.out.println("Failed to parse generated text as JSON. Returning raw text. Error: " + e.getMessage());
                 log.error("Failed to parse generated text as JSON", e);
                 Map<String, Object> fallbackResult = new HashMap<>();
                 fallbackResult.put("content", generatedText);
                 return fallbackResult;
             }
         } catch (Exception e) {
+            System.out.println("Error generating resume content: Now" + e.getMessage());
             log.error("Error generating resume content", e);
             throw e;
         }
