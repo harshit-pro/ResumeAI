@@ -17,7 +17,8 @@ import java.util.Map;
 
 @Component
 
-@Slf4j
+@Slf4j // this annotation is used to generate a logger field in the class
+// RequiredArgsConstructor is a Lombok annotation that generates a constructor with required arguments
 public class ClerkJwksProvider {
     // this class is used to fetch and cache the JSON Web Key Set (JWKS) from Clerk
     // for JWT validation.
@@ -36,7 +37,6 @@ public class ClerkJwksProvider {
    public ClerkJwksProvider() {
 
     }
-
     private Map<String, PublicKey> keyCache = new HashMap<>(); // Cache to store fetched keys->
     // keys means kid and PublicKey that contains the actual public key which is used to verify the JWT signature
     private long lastFetchTime=0;
@@ -56,7 +56,6 @@ public class ClerkJwksProvider {
         return !keyCache.containsKey(kid) ||
                 (System.currentTimeMillis() - lastFetchTime > CACHE_EXPIRY_TIME);
     }
-
     // Logic to fetch the  JWKS from the jwksUrl and populate keyCache
     // This method should be called periodically or when a key is not found in the cache
     private void refreshKeys() throws Exception {
@@ -64,7 +63,6 @@ public class ClerkJwksProvider {
         try {
             JsonNode jwks = mapper.readTree(new URL(jwksUrl));
             JsonNode keys = jwks.get("keys");
-
             Map<String, PublicKey> newKeys = new HashMap<>();
             for (JsonNode keyNode : keys) {
                 String kid = keyNode.get("kid").asText();
@@ -86,7 +84,6 @@ public class ClerkJwksProvider {
             throw new RuntimeException("Failed to refresh JWKS keys", e);
         }
     }
-
     private PublicKey createPublicKey(String modulus, String exponent) throws Exception {
         byte[] modBytes = Base64.getUrlDecoder().decode(modulus);
         byte[] expBytes = Base64.getUrlDecoder().decode(exponent);
@@ -95,9 +92,7 @@ public class ClerkJwksProvider {
                 new BigInteger(1, modBytes),
                 new BigInteger(1, expBytes)
         );
-
         return KeyFactory.getInstance("RSA").generatePublic(spec);
     }
-
 }
 

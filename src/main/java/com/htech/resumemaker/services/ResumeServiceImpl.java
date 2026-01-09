@@ -41,12 +41,18 @@ public class ResumeServiceImpl implements ResumeServices {
 
     @Value("${gemini.api.key}")
     private String apiKey;
+
+    @Value("${gemini.model:gemini-1.5-flash-latest}")
+    private String geminiModel;
+
+    private static final String GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
+
     public ResumeServiceImpl(WebClient.Builder webClientBuilder,
                              UserRepository userRepository,
                              ResumeRepo resumeRepository,
-                             ObjectMapper objectMapper,
-                             @Value("${gemini.url}") String geminiUrl) {
-        this.webClient = webClientBuilder.baseUrl("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent").build();
+                             ObjectMapper objectMapper
+                             ) {
+        this.webClient = webClientBuilder.baseUrl(GEMINI_BASE_URL).build();
         this.userRepository = userRepository;
         this.resumeRepository = resumeRepository;
         this.objectMapper = objectMapper;
@@ -75,6 +81,12 @@ public class ResumeServiceImpl implements ResumeServices {
         // Only generate content, don't save
         Objects.requireNonNull(userResumeDescription, "User description cannot be null.");
 
+        // Validate API key
+        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("${GEMINI_API_KEY}")) {
+            log.error("Gemini API key is not configured properly");
+            throw new RuntimeException("Gemini API key is not configured. Please set GEMINI_API_KEY environment variable.");
+        }
+
         String promptString = this.loadPromptFromFile();
         String promptContent = this.putValuesToTemplate(promptString, Map.of(
                 "userDescription", userResumeDescription
@@ -89,20 +101,76 @@ public class ResumeServiceImpl implements ResumeServices {
         Map<String, Object> generationConfig = new HashMap<>();
         generationConfig.put("response_mime_type", "application/json");
         requestBody.put("generationConfig", generationConfig);
-        System.out.println("Prepared request body for Gemini API: " + objectMapper.writeValueAsString(requestBody));
+
+        log.info("Using Gemini model: {}", geminiModel);
+        log.debug("Prepared request body for Gemini API: {}", objectMapper.writeValueAsString(requestBody));
 
         try {
-            System.out.println("Sending request to Gemini API with body: " + objectMapper.writeValueAsString(requestBody));
+            String endpoint = geminiModel + ":generateContent";
+            log.info("Sending request to Gemini API endpoint: {}", endpoint);
+
             String response = webClient.post()
-                    .uri(uriBuilder -> uriBuilder.queryParam("key", apiKey).build())
+                    .uri(uriBuilder -> uriBuilder
+                            .path(endpoint)
+                            .queryParam("key", apiKey)
+                            .build())
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .retryWhen(Retry.backoff(3, Duration.ofSeconds(2)) // Retry 3 times, wait 2s, 4s, 8s...
-                            .filter(throwable -> throwable instanceof WebClientResponseException.TooManyRequests)) // Only retry on 429
-                    .block();
-            System.out.println("Received response from Gemini API: " + response);
+                    .retryWhen(Retry.backoff(5, Duration.ofSeconds(5))
+                            .maxBackoff(Duration.ofSeconds(60))
+                            .jitter(0.5)
+                            .filter(throwable -> {
+                                if (throwable instanceof WebClientResponseException wcre) {
+                                    int statusCode = wcre.getStatusCode().value();
+                                    String responseBody = wcre.getResponseBodyAsString();
+                                    log.warn("Gemini API returned status {}: {}", statusCode, responseBody);
+
+                                    // Do NOT retry on 403 (Forbidden) or 400 (Bad Request) - these are config issues
+                                    if (statusCode == 403 || statusCode == 400 || statusCode == 401) {
+                                        log.error("Non-retryable error from Gemini API - Status: {}, Response: {}", statusCode, responseBody);
+                                        return false;
+                                    }
+                                    // Retry on 429 (Too Many Requests), 503 (Service Unavailable), 500 (Server Error)
+                                    boolean shouldRetry = statusCode == 429 || statusCode == 503 || statusCode == 500;
+                                    if (shouldRetry) {
+                                        log.info("Will retry request due to status code: {}", statusCode);
+                                    }
+                                    return shouldRetry;
+                                }
+                                log.warn("Non-WebClient exception, will retry: {}", throwable.getMessage());
+                                return true; // Retry on network errors
+                            })
+                            .doBeforeRetry(retrySignal -> {
+                                log.info("Retrying Gemini API request. Attempt #{}, caused by: {}",
+                                        retrySignal.totalRetries() + 1,
+                                        retrySignal.failure().getMessage());
+                            })
+                            .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                                Throwable cause = retrySignal.failure();
+                                String errorMsg = "Gemini API request failed after " + retrySignal.totalRetries() + " retries.";
+                                if (cause instanceof WebClientResponseException wcre) {
+                                    errorMsg += " Last error: " + wcre.getStatusCode() + " - " + wcre.getResponseBodyAsString();
+                                } else {
+                                    errorMsg += " Last error: " + cause.getMessage();
+                                }
+                                throw new RuntimeException(errorMsg, cause);
+                            }))
+                    .block(Duration.ofSeconds(120));
+
+            log.info("Received response from Gemini API");
+            log.debug("Full response: {}", response);
+
             JsonNode rootNode = objectMapper.readTree(response);
+
+            // Check for error in response
+            if (rootNode.has("error")) {
+                String errorMessage = rootNode.path("error").path("message").asText();
+                int errorCode = rootNode.path("error").path("code").asInt();
+                log.error("Gemini API returned error - Code: {}, Message: {}", errorCode, errorMessage);
+                throw new RuntimeException("Gemini API error: " + errorMessage);
+            }
+
             JsonNode candidates = rootNode.path("candidates");
             if (candidates.isEmpty() || !candidates.get(0).has("content")) {
                 throw new RuntimeException("Invalid response format from Gemini API");
@@ -112,22 +180,30 @@ public class ResumeServiceImpl implements ResumeServices {
                 throw new RuntimeException("No content parts in Gemini response");
             }
             String generatedText = content.get(0).path("text").asText();
-            System.out.println("Generated text from Gemini API: " + generatedText);
+            log.debug("Generated text from Gemini API: {}", generatedText);
+
             try {
                 // Parse the generated text as JSON
                 JsonNode jsonNode = objectMapper.readTree(generatedText);
-                System.out.println("Parsed generated text as JSON: " + jsonNode.toString());
+                log.debug("Parsed generated text as JSON successfully");
                 return objectMapper.convertValue(jsonNode, Map.class);
             } catch (IOException e) {
-                System.out.println("Failed to parse generated text as JSON. Returning raw text. Error: " + e.getMessage());
-                log.error("Failed to parse generated text as JSON", e);
+                log.error("Failed to parse generated text as JSON: {}", e.getMessage());
                 Map<String, Object> fallbackResult = new HashMap<>();
                 fallbackResult.put("content", generatedText);
                 return fallbackResult;
             }
+        } catch (WebClientResponseException e) {
+            log.error("Gemini API request failed - Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            if (e.getStatusCode().value() == 403) {
+                throw new RuntimeException("Gemini API access denied (403 Forbidden). Please check: " +
+                        "1) Your API key is valid, " +
+                        "2) The Generative Language API is enabled in Google Cloud Console, " +
+                        "3) The API key has proper permissions. Error: " + e.getResponseBodyAsString());
+            }
+            throw new RuntimeException("Gemini API request failed: " + e.getMessage(), e);
         } catch (Exception e) {
-            System.out.println("Error generating resume content: Now" + e.getMessage());
-            log.error("Error generating resume content", e);
+            log.error("Error generating resume content: {}", e.getMessage());
             throw e;
         }
     }
